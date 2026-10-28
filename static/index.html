@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#142b35">
+    <title>Relay Lab | Last-mile simulator</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Relay Lab home">
+        <span class="brand-mark" aria-hidden="true">R</span>
+        <span>RELAY <b>LAB</b></span>
+      </a>
+      <div class="topbar-meta">
+        <span class="live-dot" aria-hidden="true"></span>
+        <span>LOCAL SIMULATION</span>
+        <span class="topbar-divider"></span>
+        <span id="device-count">0 DEVICES</span>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">EMERGENCY DELIVERY / FIELD TEST</p>
+          <h1 id="page-title">Last-mile simulator</h1>
+          <p class="intro-copy">See how an alert moves when the network gets thin.</p>
+        </div>
+        <button class="button button-quiet" id="reset-button" type="button">Reset scenario</button>
+      </section>
+
+      <section class="workspace" aria-label="Simulation workspace">
+        <aside class="controls" aria-label="Simulation controls">
+          <div class="section-heading">
+            <span class="section-index">01</span>
+            <h2>Configure</h2>
+          </div>
+
+          <fieldset class="network-options">
+            <legend>Cellular coverage</legend>
+            <label class="network-toggle">
+              <span class="network-name"><span class="network-pill pill-2g">2G</span>Legacy network</span>
+              <input id="toggle-2g" type="checkbox" checked>
+              <span class="toggle-track" aria-hidden="true"></span>
+            </label>
+            <label class="network-toggle">
+              <span class="network-name"><span class="network-pill pill-3g">3G</span>Mobile data</span>
+              <input id="toggle-3g" type="checkbox" checked>
+              <span class="toggle-track" aria-hidden="true"></span>
+            </label>
+            <p class="field-note">Bluetooth proximity is always available when both devices are in range.</p>
+          </fieldset>
+
+          <div class="field-group">
+            <label for="source-select">Alert source</label>
+            <select id="source-select"></select>
+          </div>
+
+          <div class="field-group">
+            <label for="native-language-select">Selected device language</label>
+            <select id="native-language-select" aria-describedby="language-note"></select>
+            <p class="field-note" id="language-note">New recipients receive the alert in this language.</p>
+          </div>
+
+          <div class="field-group phone-field">
+            <label for="phone-number">Selected device phone (E.164)</label>
+            <div class="phone-input-row">
+              <input id="phone-number" type="tel" autocomplete="tel" placeholder="+919876543210" inputmode="tel">
+              <button class="button button-outline" id="save-phone" type="button">Save</button>
+            </div>
+            <p class="field-note">Used only when real SMS is enabled for a broadcast.</p>
+          </div>
+
+          <div class="field-group">
+            <label for="alert-message">Alert message</label>
+            <textarea id="alert-message" rows="5" maxlength="600">FLASH FLOOD WARNING: Leave low-lying areas now. Move to higher ground. Do not cross floodwater.</textarea>
+            <div class="input-meta"><span>SMS payload</span><span><b id="byte-count">0</b> bytes</span></div>
+            <button class="button button-outline parse-button" id="preview-alert" type="button">Preview scenario summary</button>
+            <div class="scenario-preview" id="scenario-preview" aria-live="polite">Scenario summary preview will appear here.</div>
+          </div>
+
+          <fieldset class="delivery-options">
+            <legend>Delivery reliability</legend>
+            <label class="range-label" for="failure-rate">
+              <span>Packet failure</span><output id="failure-rate-value" for="failure-rate">0%</output>
+            </label>
+            <input id="failure-rate" type="range" min="0" max="100" step="5" value="0">
+            <div class="retry-select">
+              <label for="retry-limit">Resend limit</label>
+              <select id="retry-limit">
+                <option value="0">No retries</option>
+                <option value="1">1 retry</option>
+                <option value="2" selected>2 retries</option>
+                <option value="3">3 retries</option>
+              </select>
+            </div>
+          </fieldset>
+
+          <label class="sms-opt-in"><input id="send-real-sms" type="checkbox"><span>Send real SMS to configured devices</span></label>
+          <p class="field-note sms-warning">Real SMS may incur provider charges. Requires Twilio settings in root .env.</p>
+
+          <button class="button button-primary" id="send-button" type="button">
+            <span>Broadcast alert</span><span aria-hidden="true">&#8594;</span>
+          </button>
+          <p id="status-message" class="status-message" role="status" aria-live="polite">Ready to simulate.</p>
+
+          <div class="control-divider"></div>
+          <button class="button button-outline" id="place-button" type="button" aria-pressed="false">
+            <span class="add-symbol" aria-hidden="true">+</span> Place device
+          </button>
+          <p class="field-note place-hint">Add a device at any point on the map to test another location.</p>
+
+          <div class="control-footnote">
+            <span class="footnote-mark">i</span>
+            <p>Routes are simulated estimates, not live carrier coverage.</p>
+          </div>
+        </aside>
+
+        <div class="visual-column">
+          <section class="map-panel" aria-labelledby="map-title">
+            <div class="panel-header">
+              <div>
+                <div class="section-heading map-heading">
+                  <span class="section-index">02</span>
+                  <h2 id="map-title">Network map</h2>
+                </div>
+                <p class="panel-subtitle">Select a node to set the alert source</p>
+              </div>
+              <div class="map-readout"><span class="readout-dot"></span><span id="coverage-readout">2G + 3G ACTIVE</span></div>
+            </div>
+            <div class="map-tools" aria-label="Map zoom controls">
+              <button class="zoom-button" id="zoom-out" type="button" aria-label="Zoom out" title="Zoom out">−</button>
+              <input id="zoom-level" type="range" min="0.5" max="3" step="0.25" value="1" aria-label="Map zoom level">
+              <button class="zoom-button" id="zoom-in" type="button" aria-label="Zoom in" title="Zoom in">+</button>
+              <output id="zoom-readout" for="zoom-level">1× · 1000 m view</output>
+            </div>
+            <div class="map-stage" id="map-stage">
+              <canvas id="map-canvas" width="1000" height="680" aria-label="Map showing simulated devices and delivery routes"></canvas>
+              <div class="map-coordinate" id="coordinate-readout">MAP 1000 x 680 M</div>
+              <div class="place-cursor" id="place-cursor" aria-hidden="true">Click map to place</div>
+            </div>
+            <div class="map-legend" aria-label="Route legend">
+              <span><i class="legend-line legend-bt"></i>Bluetooth</span>
+              <span><i class="legend-line legend-2g"></i>2G SMS</span>
+              <span><i class="legend-line legend-3g"></i>3G</span>
+              <span><i class="legend-node legend-ack"></i>Acknowledged</span>
+              <span><i class="legend-node legend-failed"></i>Failed</span>
+            </div>
+          </section>
+
+          <section class="results-panel" aria-labelledby="results-title">
+            <div class="results-header">
+              <div>
+                <div class="section-heading map-heading">
+                  <span class="section-index">03</span>
+                  <h2 id="results-title">Delivery report</h2>
+                </div>
+                <p class="panel-subtitle" id="report-summary">Run a broadcast to see per-device routes.</p>
+              </div>
+              <div class="delivery-count" id="delivery-count">-- / --</div>
+            </div>
+            <div class="result-columns" aria-hidden="true"><span>Device</span><span>Route</span><span>Delivery</span><span>Distance</span><span>Est. time</span><span>Preview</span><span>Android</span></div>
+            <div class="results-body" id="delivery-results">
+              <div class="empty-report"><span class="empty-mark" aria-hidden="true">&#8594;</span><span>Delivery results will appear here.</span></div>
+            </div>
+            <section class="received-preview" id="received-preview" aria-live="polite" aria-label="Selected device received message">
+              <div class="preview-empty">Broadcast an alert, then inspect a recipient to see its received message.</div>
+            </section>
+          </section>
+        </div>
+      </section>
+      <footer class="page-footer"><span>RELAY LAB / PROTOTYPE</span><span>MAP DISTANCES IN METERS</span></footer>
+    </main>
+  </body>
+</html>

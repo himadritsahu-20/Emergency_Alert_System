@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#142b35">
+    <title>Relay Lab | Android receiver</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/receiver.js" defer></script>
+  </head>
+  <body class="receiver-page">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Relay Lab home">
+        <span class="brand-mark" aria-hidden="true">R</span>
+        <span>RELAY <b>LAB</b></span>
+      </a>
+      <div class="topbar-meta"><span class="live-dot" aria-hidden="true"></span><span>DEVICE RECEIVER</span></div>
+    </header>
+    <main class="receiver-shell">
+      <p class="eyebrow">ANDROID FIELD TEST</p>
+      <h1 id="receiver-title">Emergency receiver</h1>
+      <p class="receiver-status" id="receiver-status" role="status" aria-live="polite">Connecting to this device's inbox…</p>
+      <button class="button button-primary push-enable" id="enable-push" type="button">Enable push notifications</button>
+      <section id="receiver-messages" class="receiver-messages" aria-label="Received emergency messages">
+        <p class="receiver-empty">Waiting for the next acknowledged alert.</p>
+      </section>
+    </main>
+  </body>
+</html>
